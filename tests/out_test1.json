@@ -1,0 +1,74 @@
+{
+    "prod0": {
+        "a": {
+            "modules": [
+                [
+                    "pak0",
+                    "rev1"
+                ]
+            ],
+            "tests": [
+                [
+                    "pak0.test",
+                    "fail"
+                ]
+            ]
+        },
+        "b": {
+            "modules": [
+                [
+                    "pak0",
+                    "rev2"
+                ]
+            ],
+            "tests": [
+                [
+                    "pak0.test",
+                    "pass"
+                ]
+            ]
+        },
+        "0": {
+            "modules": [
+                [
+                    "pak0",
+                    "rev1"
+                ]
+            ],
+            "tests": [
+                [
+                    "pak0.test",
+                    "fail"
+                ]
+            ]
+        },
+        "1": {
+            "modules": [
+                [
+                    "pak0",
+                    "rev4"
+                ]
+            ],
+            "tests": [
+                [
+                    "pak0.test",
+                    "pass"
+                ]
+            ]
+        },
+        "2": {
+            "modules": [
+                [
+                    "pak5",
+                    "rev1"
+                ]
+            ],
+            "tests": [
+                [
+                    "pak9.test",
+                    "fail"
+                ]
+            ]
+        }
+    }
+}

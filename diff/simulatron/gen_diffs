@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+
+# Use this script to generate the simdata tests.
+
+import os
+
+from diff.difference_engine import parse_json
+from diff.util import json_dumps
+
+HOME = os.environ.get('HOME', '/home/edwardd')
+DATADIR = "{}/Data".format(HOME)
+
+TESTNOISE = 1
+PKGNOISE = 1
+PACKAGES = 800
+PRODUCTS = 1
+
+CMD_TEMPLATE = [
+    '--testnoise=%s' % TESTNOISE,
+    '--pkgnoise=%s' % PKGNOISE,
+    '--packages=%s' % PACKAGES,
+    '--products=%s' % PRODUCTS,
+]
+
+
+def run_simulatrons():
+    """run sims"""
+    pass
+
+def run_diffeng():
+    """
+    """
+    return 0
+
+def main():
+    """Open a file with raw simulatron data, parse it, and produce the diffs
+    that can later be used for k-fold cross-validation"""
+    nbr_builds = [10, 100, 1000]
+
+    # Open a file with seeker-data or sim-data
+    for nbr in nbr_builds:
+        filename = "{}simdata.json".format(nbr)
+        with open("{}/{}".format(DATADIR, filename), 'r') as fileh:
+            text = fileh.read()
+
+        # calc diff from file
+        # save diff
+        diff = parse_json(text)
+        outfile = 'diff{}'.format(filename)
+        with open("{}/{}".format(DATADIR, outfile), 'w') as fileh:
+            fileh.write(json_dumps(diff))
+
+
+
+    # calc correlation from diff
+    # save correlation
+
+
+if __name__ == '__main__':
+    main()

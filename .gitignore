@@ -1,0 +1,14 @@
+*.pyc
+output/
+*.sublime-workspace
+*.sublime-project
+*.sublime*
+.idea/
+.coverage
+htmlcov/
+tempfile
+dbdata/*.print
+*.tmp
+test_venv/
+testvenv/
+*.egg-info

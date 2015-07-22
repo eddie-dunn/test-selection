@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Produce realistic simulatron data
+
+OUTFILE="/tmp/simdata.json"
+
+cmd_string="--filename $OUTFILE \
+    --pretty \
+    --packages 800 \
+    --builds 1000 \
+    --products 1 \
+    --testnoise 10 \
+    --pkgnoise 10 \
+    "
+
+set -o xtrace
+./simulatron.py $cmd_string
