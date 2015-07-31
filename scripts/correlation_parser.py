@@ -35,22 +35,32 @@ def main():
     """Main method"""
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', help='json file to analyze')
-    parser.add_argument('module', help='module to get recommendations on')
+    parser.add_argument('module', help='module(s) to get recommendations on. '
+                        'If many modules, separate their names by comma '
+                        'without spaces, ie  "mod1,mod2,etc".')
     parser.add_argument('-c', '--cutoff', help='cutoff limit for correlation '
                         'weights', default=0, type=int)
     args = parser.parse_args()
     filename = args.filename
-    module = args.module
+
+    modules = args.module.split(',')
 
     print("\nParsing file '{}' for recommendations on "
-          "'{}'\n".format(filename, module))
+          "{}\n".format(filename, modules))
 
     data = read_data(filename)
     if not data:
         print("ERROR: File {} not found".format(filename))
         sys.exit(1)
 
-    tests = get_tests(module, data)
+    tests = {}
+    empty_tests = []
+    for module in modules:
+        current_module_tests = get_tests(module, data)
+        if not current_module_tests:
+            empty_tests.append(module)
+        tests = {k: tests.get(k, 0) + current_module_tests.get(k, 0) for k in
+                set(tests) | set(current_module_tests)}
 
     if not tests:
         print("ERROR: Module of name {} not found in correlation "
@@ -75,6 +85,8 @@ def main():
     print("\nTime savings running only recommended tests: {} units "
           "".format(time_saved))
 
+    if empty_tests:
+        print("[INFO]: no tests found for {}".format(', '.join(empty_tests)))
 
 if __name__ == "__main__":
     main()
