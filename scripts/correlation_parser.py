@@ -40,10 +40,12 @@ def main():
                         'without spaces, ie  "mod1,mod2,etc".')
     parser.add_argument('-c', '--cutoff', help='cutoff limit for correlation '
                         'weights', default=0, type=int)
+    parser.add_argument('--delimiter', help='Delimiter for module list',
+                        default=':')
     args = parser.parse_args()
     filename = args.filename
 
-    modules = args.module.split(',')
+    modules = args.module.split(args.delimiter)
 
     print("\nParsing file '{}' for recommendations on "
           "{}\n".format(filename, modules))
