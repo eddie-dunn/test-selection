@@ -1,8 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
+
 """Correlation parser
 
 Query correlation file with a package name and get recommended tests to run.
 """
+from __future__ import print_function
 import argparse
 import json
 import sys
@@ -42,13 +44,15 @@ def main():
                         'weights', default=0, type=int)
     parser.add_argument('--delimiter', help='Delimiter for module list',
                         default=':')
+    parser.add_argument('-v', '--verbose', action="store_true", help='Prints additional information')
     args = parser.parse_args()
     filename = args.filename
 
     modules = args.module.split(args.delimiter)
 
-    print("\nParsing file '{}' for recommendations on "
-          "{}\n".format(filename, modules))
+    if args.verbose:
+        print("\nParsing file '{}' for recommendations on "
+              "{}\n".format(filename, modules))
 
     data = read_data(filename)
     if not data:
@@ -71,24 +75,27 @@ def main():
 
     ordered_tests = sorted(tests.items(), key=operator.itemgetter(1, 0))
 
-    print("Recommended tests:")
+    if args.verbose:
+        print("Recommended tests:")
     for test in ordered_tests:
         if test[1] >= args.cutoff:
-            print("{: <5} {}".format(test[1], test[0]))
-            #print("{weight:{fill}{width}} {test}".format(weight=test[1],
-            #      test=test[0], fill=' ', width=4))
+            if args.verbose:
+                print("{: <5} {}".format(test[1], test[0]))
+            else:
+                print(test[0], end=',')
 
-    if args.cutoff:
-        print("(cutoff at weight {})".format(args.cutoff))
+    if args.verbose:
+        if args.cutoff:
+            print("(cutoff at weight {})".format(args.cutoff))
 
-    print("\nTotal recommended tests: {}".format(len(ordered_tests)))
+        print("\nTotal recommended tests: {}".format(len(ordered_tests)))
 
-    time_saved = MAX_NBR_OF_TESTS - len(ordered_tests)
-    print("\nTime savings running only recommended tests: {} units "
-          "".format(time_saved))
+        time_saved = MAX_NBR_OF_TESTS - len(ordered_tests)
+        print("\nTime savings running only recommended tests: {} units "
+              "".format(time_saved))
 
-    if empty_tests:
-        print("[INFO]: no tests found for {}".format(', '.join(empty_tests)))
+        if empty_tests:
+            print("[INFO]: no tests found for {}".format(', '.join(empty_tests)))
 
 if __name__ == "__main__":
     main()
