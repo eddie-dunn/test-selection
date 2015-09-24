@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-
 """Correlation parser
 
 Query correlation file with a package name and get recommended tests to run.
 """
+
 from __future__ import print_function
 import argparse
 import json
