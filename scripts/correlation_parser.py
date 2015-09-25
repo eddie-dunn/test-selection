@@ -2,6 +2,8 @@
 """Correlation parser
 
 Query correlation file with a package name and get recommended tests to run.
+
+Written for Python3 but should support Python2 as well.
 """
 
 from __future__ import print_function
@@ -11,7 +13,7 @@ import sys
 import operator
 
 MAX_NBR_OF_TESTS = 1203
-NBR_OF_TESTS = 1203
+DEFAULT_CORRELATION_DATA_FILE = '/tmp/correlation_data.json'
 
 
 def read_data(filename):
@@ -38,10 +40,12 @@ def get_tests(module, data):
 def parse_args():
     """setup argparser"""
     parser = argparse.ArgumentParser()
-    parser.add_argument('filename', help='json file to analyze')
-    parser.add_argument('module', help='module(s) to get recommendations on. '
-                        'If many modules, separate their names by comma '
-                        'without spaces, ie  "mod1,mod2,etc".')
+    parser.add_argument('modules', nargs='+', help='module(s) to get '
+                        'recommendations on. Space separated list of modules. '
+                        'Ignored if wide mode is specified.')
+    parser.add_argument('-f', '--correlation-data',
+                        default=DEFAULT_CORRELATION_DATA_FILE,
+                        help='json file to analyze')
     parser.add_argument('-c', '--cutoff', help='cutoff limit for correlation '
                         'weights', default=0, type=int)
     parser.add_argument('--history', type=int, default=6,
@@ -50,20 +54,20 @@ def parse_args():
     parser.add_argument('--mode', default='narrow',
                         choices=['wide', 'narrow'], help='regression test '
                                                          'strategy.')
-    parser.add_argument('--delimiter', help='delimiter for module list',
-                        default=':')
     parser.add_argument('-v', '--verbose', action="store_true", help='prints '
                         'additional information')
     return parser.parse_args()
 
 
-def narrow(args):
-    filename = args.filename
-    modules = args.module.split(args.delimiter)
+def narrow(filename, args):
+    """Perform narrow test selection."""
+    # pylint: disable=too-many-branches
+    # todo: fix this  ^^^^^^^^^^^^^^^^^
+    modules = args.modules
 
     if args.verbose:
-        print("\nParsing using narrow selection on file '{}' for recommendations on "
-              "{}\n".format(filename, modules))
+        print("\nParsing using narrow selection on file '{}' for "
+              "recommendations on {}\n".format(filename, modules))
 
     data = read_data(filename)
     if not data:
@@ -77,11 +81,11 @@ def narrow(args):
         if not current_module_tests:
             empty_tests.append(module)
         tests = {k: tests.get(k, 0) + current_module_tests.get(k, 0) for k in
-                set(tests) | set(current_module_tests)}
+                 set(tests) | set(current_module_tests)}
 
     if not tests:
-        print("ERROR: Module of name {} not found in correlation "
-              "data".format(module))
+        print("WARNING: No tests correlated to specified module(s):"
+              "{}".format(modules))
         sys.exit(1)
 
     ordered_tests = sorted(tests.items(), key=operator.itemgetter(1, 0))
@@ -104,17 +108,11 @@ def narrow(args):
         if empty_tests:
             print("[INFO]: no tests found for {}".format(', '.join(empty_tests)))
     else:
-        to_print = []
-        for test in ordered_tests:
-            if test[1] >= args.cutoff:
-                to_print.append(test[0])
-
-        print(','.join(to_print))
+        print_list([item[0] for item in ordered_tests])
 
 
-def wide(args):
-    filename = args.filename
-
+def wide(filename, args):
+    """Perform wide test selection."""
     if args.verbose:
         print("\nParsing using wide selection on file '{}'"
               "\n".format(filename))
@@ -133,15 +131,17 @@ def wide(args):
 
         print("weight | name")
 
-        time_savings_percentage = (1 - len(sorted_tests) / NBR_OF_TESTS) * 100
+        time_savings_percentage = ((1 - len(sorted_tests) / MAX_NBR_OF_TESTS)
+                                   * 100)
         print("Nbr of correlated tests: {}".format(len(sorted_tests)))
         print("Time savings: {:.1f}%".format(time_savings_percentage))
     else:
-        to_print = []
-        for item in sorted_tests:
-            to_print.append(item[0])
+        print_list([item[0] for item in sorted_tests])
 
-        print(','.join(to_print))
+
+def print_list(test_list, sep='\n'):
+    """Print a list of test items, newline separated by default."""
+    print(sep.join(test_list))
 
 
 def sum_tests(data):
@@ -173,12 +173,14 @@ def main():
     """Main method"""
 
     args = parse_args()
+    filename = args.correlation_data
 
     if args.mode == 'narrow':
-        narrow(args)
+        narrow(filename, args)
 
     if args.mode == 'wide':
-        wide(args)
+        wide(filename, args)
+
 
 if __name__ == "__main__":
     main()
