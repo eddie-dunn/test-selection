@@ -4,7 +4,7 @@ packages.
 
 Use for context independent test selection.
 """
-
+from __future__ import print_function
 import argparse
 import json
 import operator
@@ -30,13 +30,19 @@ def main():
 
     tests = sum_tests(data)
     sorted_tests = sorted(tests.items(), key=operator.itemgetter(1, 0))
+
+    to_print = []
     for item in sorted_tests:
-        print("{: >6} | {}".format(item[1], item[0]))
-    print("weight | name")
+        #print("{: >6} | {}".format(item[1], item[0]))
+        to_print.append(item[0])
+
+    print(','.join(to_print))
+
+    # print("weight | name")
 
     time_savings_percentage = (1 - len(sorted_tests)/NBR_OF_TESTS)*100
-    print("Nbr of correlated tests: {}".format(len(sorted_tests)))
-    print("Time savings: {:.1f}%".format(time_savings_percentage))
+    # print("Nbr of correlated tests: {}".format(len(sorted_tests)))
+    # print("Time savings: {:.1f}%".format(time_savings_percentage))
 
 
 def sum_tests(data):
