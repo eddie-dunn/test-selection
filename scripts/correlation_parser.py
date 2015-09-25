@@ -11,6 +11,8 @@ import sys
 import operator
 
 MAX_NBR_OF_TESTS = 1203
+NBR_OF_TESTS = 1203
+
 
 def read_data(filename):
     """Read json data from filename"""
@@ -33,8 +35,8 @@ def get_tests(module, data):
     return tests
 
 
-def main():
-    """Main method"""
+def parse_args():
+    """setup argparser"""
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', help='json file to analyze')
     parser.add_argument('module', help='module(s) to get recommendations on. '
@@ -42,16 +44,25 @@ def main():
                         'without spaces, ie  "mod1,mod2,etc".')
     parser.add_argument('-c', '--cutoff', help='cutoff limit for correlation '
                         'weights', default=0, type=int)
-    parser.add_argument('--delimiter', help='Delimiter for module list',
+    parser.add_argument('--history', type=int, default=6,
+                        choices=[3, 6, 12, 24], help='time frame '
+                        'from which to analyze.')
+    parser.add_argument('--mode', default='narrow',
+                        choices=['wide', 'narrow'], help='regression test '
+                                                         'strategy.')
+    parser.add_argument('--delimiter', help='delimiter for module list',
                         default=':')
-    parser.add_argument('-v', '--verbose', action="store_true", help='Prints additional information')
-    args = parser.parse_args()
-    filename = args.filename
+    parser.add_argument('-v', '--verbose', action="store_true", help='prints '
+                        'additional information')
+    return parser.parse_args()
 
+
+def narrow(args):
+    filename = args.filename
     modules = args.module.split(args.delimiter)
 
     if args.verbose:
-        print("\nParsing file '{}' for recommendations on "
+        print("\nParsing using narrow selection on file '{}' for recommendations on "
               "{}\n".format(filename, modules))
 
     data = read_data(filename)
@@ -77,14 +88,10 @@ def main():
 
     if args.verbose:
         print("Recommended tests:")
-    for test in ordered_tests:
-        if test[1] >= args.cutoff:
-            if args.verbose:
+        for test in ordered_tests:
+            if test[1] >= args.cutoff:
                 print("{: <5} {}".format(test[1], test[0]))
-            else:
-                print(test[0], end=',')
 
-    if args.verbose:
         if args.cutoff:
             print("(cutoff at weight {})".format(args.cutoff))
 
@@ -96,6 +103,82 @@ def main():
 
         if empty_tests:
             print("[INFO]: no tests found for {}".format(', '.join(empty_tests)))
+    else:
+        to_print = []
+        for test in ordered_tests:
+            if test[1] >= args.cutoff:
+                to_print.append(test[0])
+
+        print(','.join(to_print))
+
+
+def wide(args):
+    filename = args.filename
+
+    if args.verbose:
+        print("\nParsing using wide selection on file '{}'"
+              "\n".format(filename))
+
+    with open(filename, 'r') as fileh:
+        string_data = fileh.read()
+
+    data = json.loads(string_data)
+
+    tests = sum_tests(data)
+    sorted_tests = sorted(tests.items(), key=operator.itemgetter(1, 0))
+
+    if args.verbose:
+        for item in sorted_tests:
+            print("{: >6} | {}".format(item[1], item[0]))
+
+        print("weight | name")
+
+        time_savings_percentage = (1 - len(sorted_tests) / NBR_OF_TESTS) * 100
+        print("Nbr of correlated tests: {}".format(len(sorted_tests)))
+        print("Time savings: {:.1f}%".format(time_savings_percentage))
+    else:
+        to_print = []
+        for item in sorted_tests:
+            to_print.append(item[0])
+
+        print(','.join(to_print))
+
+
+def sum_tests(data):
+    """Go through each package in data, get the tests and their correlations,
+    and add test and correlation to a list. If test already exists, increment
+    weight by the weight of the test found."""
+    tests = {}
+    for package in data:
+        for test in data[package]:
+            if test in tests:
+                tests[test] += data[package][test]
+            else:
+                tests[test] = data[package][test]
+
+    return tests
+
+
+def test_sum_tests():
+    """Test sumt test func"""
+    data = {'pak1': {'test1': 2, 'test2': 5},
+            'pak2': {'test1': 1, 'test3': 7},
+            'pak3': {'test1': 1, 'test3': 1}}
+
+    tests = sum_tests(data)
+    assert tests == {'test1': 4, 'test2': 5, 'test3': 8}
+
+
+def main():
+    """Main method"""
+
+    args = parse_args()
+
+    if args.mode == 'narrow':
+        narrow(args)
+
+    if args.mode == 'wide':
+        wide(args)
 
 if __name__ == "__main__":
     main()
