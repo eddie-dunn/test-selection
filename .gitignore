@@ -12,3 +12,5 @@ dbdata/*.print
 test_venv/
 testvenv/
 *.egg-info
+build/
+dist/
