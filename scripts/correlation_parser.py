@@ -13,7 +13,7 @@ import sys
 import operator
 
 MAX_NBR_OF_TESTS = 1203
-DEFAULT_CORRELATION_DATA_FILE = '/tmp/correlation_data.json'
+DEFAULT_CORRELATION_DATA_FILE = '/var/cache/correlation_data.json'
 
 
 def read_data(filename):
@@ -51,8 +51,8 @@ def parse_args():
     parser.add_argument('--history', type=int, default=6,
                         choices=[3, 6, 12, 24], help='time frame '
                         'from which to analyze.')
-    parser.add_argument('--mode', default='narrow',
-                        choices=['wide', 'narrow'], help='regression test '
+    parser.add_argument('--mode', default='NARROW',
+                        choices=['WIDE', 'NARROW'], help='regression test '
                                                          'strategy.')
     parser.add_argument('-v', '--verbose', action="store_true", help='prints '
                         'additional information')
@@ -175,10 +175,10 @@ def main():
     args = parse_args()
     filename = args.correlation_data
 
-    if args.mode == 'narrow':
+    if args.mode == 'NARROW':
         narrow(filename, args)
 
-    if args.mode == 'wide':
+    if args.mode == 'WIDE':
         wide(filename, args)
 
 
