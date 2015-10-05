@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 """Main module for running the Difference Engine"""
 #from diff.util import timeit
 from util.util import json_dumps
@@ -9,6 +10,7 @@ from diff.difference_engine import printable_analysis
 # External imports
 import argparse
 import logging
+import codecs
 
 
 #@timeit
@@ -37,6 +39,10 @@ def main():
                         'are calculated from as well.')
     args = parser.parse_args()
 
+    import guppy
+    hp = guppy.hpy()
+    hp.setrelheap()
+
     diffdump = args.diffdump
     filename = args.filename
     output = args.output
@@ -48,33 +54,34 @@ def main():
         raise ValueError('Invalid log level: %s' % args.loglevel)
 
     logformat = "[%(levelname)s: %(message)s]"
-    logging.basicConfig(name='difference_engine', format=logformat,
+    logging.basicConfig(filename='difference_engine', format=logformat, # TODO: Had to change to filename, ok?
                         level=args.loglevel)
 
-    with open(filename, 'r') as fileh:
+    with codecs.open(filename, 'r', encoding="utf-8") as fileh:
         text = fileh.read()
 
-    print("analyzing and generating diff...")
     diff = parse_json(text)
-    print("correlating diff...")
+
     correlation = correlate(diff)
 
     # Append json extension if not provided
     if not output.endswith(".json"):
         output = output + ".json"
 
-    with open(output, 'w') as fileh:
+    with codecs.open(output, 'w', encoding='utf-8') as fileh:
         print("Writing {}correlation to {}.".format(
             "pretty " if pretty else "", output))
         fileh.write(json_dumps(correlation, pretty=pretty))
 
     if diffdump:  # Write diffdump if set
-        with open(diffdump, 'w') as fileh:
+        with codecs.open(diffdump, 'w', encoding='utf-8') as fileh:
             print("Writing diffdump to {}.".format(diffdump))
             fileh.write(json_dumps(diff, pretty=pretty))
 
     if args.print_:
         print('\n'.join(printable_analysis(correlation, cutoff=args.cutoff)))
+
+    print hp.heap()
 
 if __name__ == "__main__":
     main()

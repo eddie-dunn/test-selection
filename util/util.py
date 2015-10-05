@@ -215,7 +215,8 @@ class Build(BaseBuild):
             tests = []
 
         # Assert that the correct objects are passed to the constructor
-        validate_build_contents(packages, tests)
+        # TODO: Fix validation after optimization is done...
+        #validate_build_contents(packages, tests)
         super(Build, self).__init__(name, packages, tests)
 
     def has_test(self, test):

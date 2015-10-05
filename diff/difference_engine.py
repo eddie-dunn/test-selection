@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """ Difference Engine™
 
@@ -63,6 +64,7 @@ from __future__ import print_function
 import logging
 import copy
 import operator
+import time
 from collections import OrderedDict
 
 # Internal imports
@@ -97,7 +99,6 @@ def changed_modules(prev_build, next_build):
     changed = modules_next - modules_prev
     return [mod[0] for mod in changed]
 
-
 def rm_params_from_names(mlist):
     """Look at testnames and filter out everything after a '(' character, to
     avoid different names for testnames that include parameters.
@@ -115,8 +116,12 @@ def rm_params_from_names(mlist):
              ('of', 'fail'),
              ('tests', 'pass')]
     """
-    return [(name[0][:name[0].rfind('(')], name[1])
-            if '(' in name[0]
+    #return [(name[0][:name[0].rfind('(')], name[1])
+    #        if '(' in name[0]
+    #        else name for name in mlist]
+    # TODO: Update docstring to reflect new format
+    return [name[:name.rfind('(')]
+            if '(' in name
             else name for name in mlist]
 
 
@@ -129,10 +134,43 @@ def flips(prev_build, next_build):
 
     Args:
         prev_build (dict): The previous Build, e.g:
-            prev_build = {'tests': [('test1', 'pass'), ('test2', 'fail'),
-                                    ('testX', 'pass')]
+            prev_build = {'prodname1': {'bid1': {'tests': {'pass': ['test1',
+                                                                   'test2'],
+                                                          'fail': ['test3']
+                                                          }
+                                               }
+                                      },
+                         'prodname2': {'bid1': {'tests': {'pass': ['test5'],
+                                                          'fail': ['test4']
+                                                          }
+                                               }
+                                      },
+                         'prodname3': {'bid5': {'tests': {'pass': ['test45'],
+                                                          'fail': ['test22',
+                                                                   'test5']
+                                                          }
+                                               }
+                                      }
+                        }
         next_build (dict): The current Build, e.g:
-            next_build = {'tests': [('test1', 'fail'), ('testY', 'pass')]
+            next_build = {'prodname1': {'bid1': {'tests': {'pass': ['test1'],
+                                                           'fail': ['test3',
+                                                                    'test2']
+                                                          }
+                                               }
+                                      },
+                         'prodname2': {'bid1': {'tests': {'pass': ['test5'],
+                                                          'fail': ['test4']
+                                                          }
+                                               }
+                                      },
+                         'prodname3': {'bid5': {'tests': {'pass': ['test45'],
+                                                          'fail': ['test22',
+                                                                   'test5']
+                                                          }
+                                               }
+                                      }
+                        }
 
     Returns:
         (list) A list of module names that were changed between prev_build and
@@ -140,15 +178,20 @@ def flips(prev_build, next_build):
 
             ['test1', 'testY']
     """
-    tests_prev = rm_params_from_names(prev_build['tests'])
-    tests_next = rm_params_from_names(next_build['tests'])
-    validate_build_contents(tests_prev, tests_next)
-    tests_prev_set = set(hashable(tests_prev))
-    tests_next_set = set(hashable(tests_next))
-    diff = tests_next_set - tests_prev_set
-    name_intersect = (set(util.get_names(tests_prev_set)) &
-                      set(util.get_names(tests_next_set)))
-    return [test[0] for test in diff if test[0] in name_intersect]
+    # TODO: Update docstring to match the new format
+
+    tests_prev_passed = set(rm_params_from_names(prev_build['tests']['pass']))
+    tests_prev_failed = set(rm_params_from_names(prev_build['tests']['fail']))
+    tests_next_passed = set(rm_params_from_names(next_build['tests']['pass']))
+    tests_next_failed = set(rm_params_from_names(next_build['tests']['fail']))
+
+    diff = (tests_next_passed - tests_prev_passed).union(
+           (tests_next_failed - tests_prev_failed))
+
+    name_intersect = set((list(tests_prev_passed) + list(tests_prev_failed))) & \
+                     set((list(tests_next_passed) + list(tests_next_failed)))
+
+    return [test for test in diff if test in name_intersect]
 
 
 #@timeit
