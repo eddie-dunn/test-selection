@@ -30,18 +30,15 @@ def timeit(method):
     # Only time if log level is high enough
     return timed
 
-
 def set_default(obj):
     """Used for json.dumps to deal with set objects"""
     if isinstance(obj, set):
         return list(obj)
     raise TypeError
 
-
 def hashable(iterable):
     """Convert elements in iterable to tuples"""
     return [tuple(item) for item in iterable]
-
 
 def json_loads(string):
     """A custom json load string function is needed in order to make sure that
@@ -55,13 +52,11 @@ def json_loads(string):
     """
     return json.loads(string, object_pairs_hook=OrderedDict)
 
-
 def assert_is_ordered(container):
     """Make sure we are dumping ordered content"""
     if not isinstance(container, OrderedDict):
         raise TypeError("Container needs to be OrderedDict but was "
                         "{}".format(type(container)))
-
 
 def json_dumps(content, pretty=False, assert_ordered=False):
     """Create a json string from iterable. If `pretty` == True, it will be
@@ -87,7 +82,6 @@ def is_tuple_or_list(item):
         return True
     return False
 
-
 def validate_list_or_set(iterable):
     """Validate iterable to be either a list or set of tuples"""
     if not is_list_or_set(iterable):
@@ -101,13 +95,11 @@ def validate_list_or_set(iterable):
         raise TypeError("Expected tuple, found {} in {} of {}".format(
             type(first_item), type(iterable), list(iterable)[:3]))
 
-
 def validate_build_contents(*build_contents):
     """Takes a variable list of parameters and verifies that they are a list or
     set of tuples or lists"""
     for item in build_contents:
         validate_list_or_set(item)
-
 
 def increment(string):
     """Look for the last sequence of number(s) in a string and increment
@@ -122,7 +114,6 @@ def increment(string):
         incremented_string = (string[:max(end-len(next_val), start)]
                               + next_val + string[end:])
     return incremented_string
-
 
 def get_names(list_of_tuples):
     """From a list or similar iterable, where each item contains a tuple,
@@ -149,6 +140,7 @@ def get_names(list_of_tuples):
 # | |_/ / |_| | | | (_| | | \__/\ | (_| \__ \__ \  __/\__ \
 # \____/ \__,_|_|_|\__,_|  \____/_|\__,_|___/___/\___||___/
 # Build Classes
+
 
 class BaseBuild(object):
     """A base class for a Build object"""
@@ -191,6 +183,58 @@ class BaseBuild(object):
         modules = contents['modules']
         tests = contents['tests']
         return cls(name, modules, tests)
+
+
+class BuildOpt(BaseBuild):
+    """A build object contains the packages that were changed in a build as
+    well as the tests which failed (or perhaps flipped, to be decided)"""
+
+
+    def __init__(self, name, packages=None, tests=None):
+        """Create a new build.
+
+        Args:
+            name (str): Name of build
+            packages (iterable): An iterable of tuples or lists of the format
+            ('pkgname', 'revnum')
+            tests (iterable): An iterable containing tuples or lists of the
+            format ('testname', 'teststatus')
+
+        """
+        if not packages:
+            packages = []
+        if not tests:
+            tests = {'pass': [], 'fail': []}
+
+        # Assert that the correct objects are passed to the constructor
+        # TODO: Fix validation after optimization is done...
+        #validate_build_contents(packages, tests)
+        super(Build, self).__init__(name, packages, tests)
+
+    def has_test(self, test):
+        """Returns true if `test` exists set"""
+        return test in [_test for _test in (self.tests['pass'] & self.tests['fail']) if _test]
+
+    def has_package(self, package):
+        """Returns true if `package` exists in set"""
+        return package in [pkg[0] for pkg in self.packages if pkg]
+
+    @classmethod
+    def _diff_list(cls, first, second):
+        """Diff between first and second (list or set of tuples)"""
+        diff = set(hashable(first)) - set(hashable(second))
+        return {mod[0] for mod in diff if mod}
+        # eTODO: Should seriously consider returning a list instead of a set
+        # since this guarantees the order of stuff when saving as json
+        #return sorted([mod[0] for mod in diff if mod])
+
+    def __sub__(self, other):
+        """Use function _diff_list to calculate the difference between packages
+        and tests"""
+        mod_diff = self._diff_list(self.packages, other.packages)
+        test_diff = self._diff_list(self.tests, other.tests)
+        diff = {self.module_string: mod_diff, self.test_string: test_diff}
+        return diff
 
 
 class Build(BaseBuild):

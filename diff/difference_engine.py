@@ -57,7 +57,6 @@ The analyzed results are put in a dict with the following structure:
 This module also contains a method to print the analyzed results, showing how
 much each test depends on each package.
 """
-# TODO: Update docstring
 
 # External imports
 from __future__ import print_function
@@ -68,8 +67,6 @@ import time
 from collections import OrderedDict
 
 # Internal imports
-import util.util as util
-#from diff.util import timeit
 from util.util import hashable
 from util.util import json_loads
 from util.util import validate_build_contents
@@ -99,30 +96,20 @@ def changed_modules(prev_build, next_build):
     changed = modules_next - modules_prev
     return [mod[0] for mod in changed]
 
+
 def rm_params_from_names(mlist):
     """Look at testnames and filter out everything after a '(' character, to
     avoid different names for testnames that include parameters.
 
     Args:
-        mlist (list): A list containing tests and their status, e.g:
-            [('list(param1, param2)', 'pass'),
-             ('of', 'fail'),
-             ('tests(foo, bar)', 'pass')]
+        mlist (list): A list containing tests, e.g:
+                      ['list(param1, param2)', 'of', 'tests(foo, bar)']
 
     Returns:
-        (list): A list of tests and their status, with everything after the
-        rightmost `(` filtered out. E.g:
-            [('list, 'pass'),
-             ('of', 'fail'),
-             ('tests', 'pass')]
+        (list): A list of tests, with everything after the rightmost `(`
+        filtered out. E.g: ['list, 'of', 'tests']
     """
-    #return [(name[0][:name[0].rfind('(')], name[1])
-    #        if '(' in name[0]
-    #        else name for name in mlist]
-    # TODO: Update docstring to reflect new format
-    return [name[:name.rfind('(')]
-            if '(' in name
-            else name for name in mlist]
+    return [name[:name.rfind('(')] if '(' in name else name for name in mlist]
 
 
 def flips(prev_build, next_build):
@@ -135,8 +122,8 @@ def flips(prev_build, next_build):
     Args:
         prev_build (dict): The previous Build, e.g:
             prev_build = {'prodname1': {'bid1': {'tests': {'pass': ['test1',
-                                                                   'test2'],
-                                                          'fail': ['test3']
+                                                                    'test2'],
+                                                          'fail':  ['test3']
                                                           }
                                                }
                                       },
@@ -178,8 +165,6 @@ def flips(prev_build, next_build):
 
             ['test1', 'testY']
     """
-    # TODO: Update docstring to match the new format
-
     tests_prev_passed = set(rm_params_from_names(prev_build['tests']['pass']))
     tests_prev_failed = set(rm_params_from_names(prev_build['tests']['fail']))
     tests_next_passed = set(rm_params_from_names(next_build['tests']['pass']))
@@ -188,13 +173,12 @@ def flips(prev_build, next_build):
     diff = (tests_next_passed - tests_prev_passed).union(
            (tests_next_failed - tests_prev_failed))
 
-    name_intersect = set((list(tests_prev_passed) + list(tests_prev_failed))) & \
-                     set((list(tests_next_passed) + list(tests_next_failed)))
+    name_intersect = (set((list(tests_prev_passed) + list(tests_prev_failed))) &
+                     set((list(tests_next_passed) + list(tests_next_failed))))
 
     return [test for test in diff if test in name_intersect]
 
 
-#@timeit
 def diff_builds(buildset, pkgnames=None, testnames=None):
     """Iterate through BuildSet and find which packages were changed in
     subsequent builds, and which tests flipped. It is very important that
@@ -269,7 +253,6 @@ def diff_builds(buildset, pkgnames=None, testnames=None):
     return ret
 
 
-#@timeit
 def correlate(diff_list):
     """Go through the list of changed modules and flipped tests and count the
     correlations.
@@ -334,7 +317,6 @@ def parse_json(json_string):
 # Main method stuff
 # #################
 
-#@timeit
 def filter_correlations(diff, cutoff=-1):
     """Filter (remove) unwanted entries from database"""
     retdb = copy.deepcopy(diff)
@@ -350,7 +332,7 @@ def filter_correlations(diff, cutoff=-1):
     logging.debug("filtered dict: %s", retdb)
     return retdb
 
-#@timeit
+
 def printable_analysis(correlation, cutoff=-1):
     """Returns a print-friendly list based on the input database"""
     # Filter out correlations below cutoff limit:

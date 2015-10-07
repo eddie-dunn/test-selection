@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """Main module for running the Difference Engine"""
-#from diff.util import timeit
 from util.util import json_dumps
 from diff.difference_engine import parse_json
 from diff.difference_engine import correlate
@@ -13,12 +12,11 @@ import logging
 import codecs
 
 
-#@timeit
 def main():
     """Main method to run Difference Engine™ standalone"""
     default_cutoff = 0
-    #default_outputfile = '/tmp/correlation.json'
-    #default_diffdump = '/tmp/diffdump.json'
+    # default_outputfile = '/tmp/correlation.json'
+    # default_diffdump = '/tmp/diffdump.json'
 
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', help="JSON file to analyze")
@@ -34,14 +32,10 @@ def main():
                         help='print output to stdout as well')
     parser.add_argument('--minimized', '-m', action='store_true',
                         help='store output as minimized json',)
-    parser.add_argument('--diffdump',  '-d',
+    parser.add_argument('--diffdump', '-d',
                         help='dump the difference data that the correlations '
                         'are calculated from as well.')
     args = parser.parse_args()
-
-    import guppy
-    hp = guppy.hpy()
-    hp.setrelheap()
 
     diffdump = args.diffdump
     filename = args.filename
@@ -54,7 +48,7 @@ def main():
         raise ValueError('Invalid log level: %s' % args.loglevel)
 
     logformat = "[%(levelname)s: %(message)s]"
-    logging.basicConfig(filename='difference_engine', format=logformat, # TODO: Had to change to filename, ok?
+    logging.basicConfig(filename='difference_engine', format=logformat,
                         level=args.loglevel)
 
     with codecs.open(filename, 'r', encoding="utf-8") as fileh:
@@ -81,7 +75,6 @@ def main():
     if args.print_:
         print('\n'.join(printable_analysis(correlation, cutoff=args.cutoff)))
 
-    print hp.heap()
 
 if __name__ == "__main__":
     main()

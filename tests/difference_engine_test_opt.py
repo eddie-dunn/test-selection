@@ -5,12 +5,13 @@ from collections import OrderedDict
 from diff.difference_engine import parse_json
 from diff.difference_engine import correlate
 
-# pylint: disable=missing-docstring
+# pylint:disable=missing-docstring
 # pylint: disable=too-many-public-methods
 # pylint: disable=bad-whitespace,invalid-name
 # pylint: disable=no-self-use
 
-def test_correlations_are_calculated_correctly(self):
+
+def test_correct_correlations():
     """Test that flips are correctly calculated
 
     Assuming only pakX and pak2 exists in db, and with the following
@@ -115,6 +116,7 @@ def test_correlations_are_calculated_correctly(self):
                            'pakX': {'test1': 2, 'testX': 1}}
     assert correlation == correct_correlation
 
+
 def test_filter_test_params():
     mlist = ['list',
              'of',
@@ -133,7 +135,11 @@ def test_filter_test_params():
 
 
 class ParseJSON(unittest.TestCase):
-
+    """
+    Initializes text strings containing JSON-structures that includes a product
+    with corresponding builds, modules, and tests (and their results)
+    """
+    # pylint: disable=invalid-name
     def setUp(self):
         self.text_big = """
             {"product1": {
@@ -241,34 +247,36 @@ class ParseJSON(unittest.TestCase):
         """
 
     def test_json_loads(self):
+        """
+        Test that the correct
+        """
         loaded = difference_engine.json_loads(self.text_small)
         assert 'test1' in loaded['prod']['bid1']['tests']['fail']
         assert ['mod2', '2'] in loaded['prod']['bid2']['modules']
 
     def test_parse_json_text_small_correct(self):
         parsed = difference_engine.parse_json(self.text_small)
-        correct = [{'modules': [],
-                    'tests': []},
-                   {'modules': [u'mod2'],
-                    'tests': ['test2']}
-                  ]
+        correct = [{'modules': [], 'tests': []},
+                   {'modules': [u'mod2'], 'tests': ['test2']}]
         assert parsed == correct
 
-    #@pytest.mark.xfail
+    # @pytest.mark.xfail
     def test_parse_json_text_big_flips(self):
         parsed = difference_engine.parse_json(self.text_big)
         assert "test_will_pass_next_time" in parsed[1]['tests']
         assert 'libs/freetype2.test' not in parsed[1]['tests']
 
-    #@pytest.mark.xfail
+    # @pytest.mark.xfail
     def test_parse_json_text_big_changed_modules(self):
         parsed = difference_engine.parse_json(self.text_big)
         assert "packages/web/apps/cgiprg/logger" in parsed[1]['modules']
         assert "apps/utils/root_wrapper" not in parsed[1]['modules']
 
+
 # Tests for diff_builds
 # =====================
 class TestDiffBuilds(unittest.TestCase):
+
     def setUp(self):
         self.builds = {
             "0": {
@@ -326,7 +334,7 @@ class TestDiffBuilds(unittest.TestCase):
                         0
                     ]
                 ]
-            },}
+            }}
         # The dict has only one package that is changed: mod5
         # and only two tests that have flipped (fail->pass): mod5.test
         #                                      (pass->fail): pak4.test
@@ -365,6 +373,7 @@ class TestDiffBuilds(unittest.TestCase):
         ]
         assert diff == correct_diff
 
+
 # Tests for flips
 # ================
 def test_flips_are_correct1():
@@ -373,11 +382,13 @@ def test_flips_are_correct1():
     flips = difference_engine.flips(build1, build2)
     assert set(flips) == set(['A'])
 
+
 def test_flips_are_correct2():
     build1 = {'tests': {'pass': ['A'], 'fail': ['B']}}
     build2 = {'tests': {'pass': [], 'fail': ['A', 'B']}}
     flips = difference_engine.flips(build1, build2)
     assert set(flips) == set(['A'])
+
 
 def test_flips_are_correct3():
     # pylint: disable=line-too-long
@@ -386,17 +397,20 @@ def test_flips_are_correct3():
     flips = difference_engine.flips(build1, build2)
     assert set(flips) == set(['A', 'C'])
 
+
 def test_flips_are_correct4_opt():
     build1 = {'tests': {'pass': ['1', '3'], 'fail': ['2', '4']}}
     build2 = {'tests': {'pass': ['1'], 'fail': ['2', '4', '3', '5']}}
     flips = difference_engine.flips(build1, build2)
     assert set(flips) == set(['3'])
 
+
 def test_flips_are_correct5_opt():
     build2 = {'tests': {'pass': ['1', '3'], 'fail': ['2', '4']}}
     build1 = {'tests': {'pass': ['1'], 'fail': ['2', '4', '3', '5']}}
     flips = difference_engine.flips(build1, build2)
     assert set(flips) == set(['3'])
+
 
 # Tests for changed modules
 # =========================
@@ -408,16 +422,19 @@ def test_diff_modules():
     changed_modules = difference_engine.changed_modules(build1, build2)
     assert set(correct_changed_modules) == set(changed_modules)
 
+
 def test_correlate():
-    # pylint: disable=bad-continuation
+
     diff1 = [
         # mod3 not changed
         {'modules': ['mod1', 'mod2'], 'tests': ['testA', 'testB', 'testC']},
-        # mod2 not changed            # testB did not flip
+        # mod2 not changed
+        # testB did not flip
         {'modules': ['mod1', 'mod3'], 'tests': ['testA', 'testC']},
-        # mod1 not changed            # testC did not flip
+        # mod1 not changed
+        # testC did not flip
         {'modules': ['mod2', 'mod3'], 'tests': ['testA', 'testB']},
-                                      # testA did not flip
+        # testA did not flip
         {'modules': ['mod1', 'mod2', 'mod3'], 'tests': ['testB', 'testC']},
     ]
 
@@ -430,6 +447,7 @@ def test_correlate():
         }
 
     assert correlation == correct_correlation
+
 
 # Tests for printable_analysis
 # ============================
@@ -444,6 +462,7 @@ def test_printable_analysis():
     assert 'mod3' in printable1
     # With cutoff at 3, nothing from mod3 should show...
     assert 'mod3' not in printable2
+
 
 def test_print_analysis():
     analysis = {
