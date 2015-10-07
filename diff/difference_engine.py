@@ -170,8 +170,8 @@ def flips(prev_build, next_build):
     tests_next_passed = set(rm_params_from_names(next_build['tests']['pass']))
     tests_next_failed = set(rm_params_from_names(next_build['tests']['fail']))
 
-    diff = (tests_next_passed - tests_prev_passed).union(
-           (tests_next_failed - tests_prev_failed))
+    diff = ((tests_next_passed - tests_prev_passed) |
+            (tests_next_failed - tests_prev_failed))
 
     name_intersect = (set((list(tests_prev_passed) + list(tests_prev_failed))) &
                      set((list(tests_next_passed) + list(tests_next_failed))))
