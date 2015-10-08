@@ -311,6 +311,7 @@ class TestDiffBuilds(unittest.TestCase):
         ]
         assert diff == correct_diff
 
+
 # Tests for test flips
 # ====================
 #    ______ _ _

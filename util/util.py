@@ -17,7 +17,6 @@ from collections import OrderedDict
 # | | | | __| | | |  _| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
 # | |_| | |_| | | | | | |_| | | | | (__| |_| | (_) | | | \__ \
 #  \__,_|\__|_|_| |_|  \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
-
 def timeit(method):
     """Use to decorate functions/methods to log how long they take
     TODO: Disable timed if logging info is not enabled"""
@@ -74,6 +73,7 @@ def json_dumps(content, pretty=False, assert_ordered=False):
         return json.dumps(content, indent=4, separators=(',', ': '))
     return json.dumps(content)
 
+
 def is_list_or_set(item):
     """Returns True if item is set or list"""
     if isinstance(item, set) or isinstance(item, list):
@@ -119,8 +119,8 @@ def increment(string):
     if reg_m:
         next_val = str(int(reg_m.group(1))+1)
         start, end = reg_m.span(1)
-        incremented_string = (string[:max(end-len(next_val), start)]
-                              + next_val + string[end:])
+        incremented_string = (string[:max(end-len(next_val), start)] +
+                              next_val + string[end:])
     return incremented_string
 
 
@@ -149,6 +149,7 @@ def get_names(list_of_tuples):
 # | |_/ / |_| | | | (_| | | \__/\ | (_| \__ \__ \  __/\__ \
 # \____/ \__,_|_|_|\__,_|  \____/_|\__,_|___/___/\___||___/
 # Build Classes
+
 
 class BaseBuild(object):
     """A base class for a Build object"""
@@ -197,7 +198,6 @@ class Build(BaseBuild):
     """A build object contains the packages that were changed in a build as
     well as the tests which failed (or perhaps flipped, to be decided)"""
 
-
     def __init__(self, name, packages=None, tests=None):
         """Create a new build.
 
@@ -207,7 +207,6 @@ class Build(BaseBuild):
             ('pkgname', 'revnum')
             tests (iterable): An iterable containing tuples or lists of the
             format ('testname', 'teststatus')
-
         """
         if not packages:
             packages = []
@@ -215,7 +214,8 @@ class Build(BaseBuild):
             tests = []
 
         # Assert that the correct objects are passed to the constructor
-        validate_build_contents(packages, tests)
+        # TODO: Fix validation after optimization is done...
+        # validate_build_contents(packages, tests)
         super(Build, self).__init__(name, packages, tests)
 
     def has_test(self, test):
@@ -233,7 +233,7 @@ class Build(BaseBuild):
         return {mod[0] for mod in diff if mod}
         # eTODO: Should seriously consider returning a list instead of a set
         # since this guarantees the order of stuff when saving as json
-        #return sorted([mod[0] for mod in diff if mod])
+        # return sorted([mod[0] for mod in diff if mod])
 
     def __sub__(self, other):
         """Use function _diff_list to calculate the difference between packages
@@ -270,7 +270,7 @@ class BuildSet(object):
         """Return BuildSet as an ordered dict"""
         mdict = OrderedDict()
         for build in self.builds:
-            #mdict[build.name] = build.dict[build.name]
+            # mdict[build.name] = build.dict[build.name]
             mdict.update(build.dict)
 
         return mdict
@@ -286,7 +286,7 @@ class BuildSet(object):
 
     def json(self, indent=None):
         """Convert buildset to json"""
-        #return json.dumps(self.dict, indent=indent, separators=(',', ': '))
+        # return json.dumps(self.dict, indent=indent, separators=(',', ': '))
         return json_dumps(self.dict, pretty=indent)
 
     def __str__(self):

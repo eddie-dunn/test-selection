@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """ Difference Engine™
 
@@ -56,18 +57,16 @@ The analyzed results are put in a dict with the following structure:
 This module also contains a method to print the analyzed results, showing how
 much each test depends on each package.
 """
-# TODO: Update docstring
 
 # External imports
 from __future__ import print_function
 import logging
 import copy
 import operator
+import time
 from collections import OrderedDict
 
 # Internal imports
-import util.util as util
-#from diff.util import timeit
 from util.util import hashable
 from util.util import json_loads
 from util.util import validate_build_contents
@@ -103,21 +102,14 @@ def rm_params_from_names(mlist):
     avoid different names for testnames that include parameters.
 
     Args:
-        mlist (list): A list containing tests and their status, e.g:
-            [('list(param1, param2)', 'pass'),
-             ('of', 'fail'),
-             ('tests(foo, bar)', 'pass')]
+        mlist (list): A list containing tests, e.g:
+                      ['list(param1, param2)', 'of', 'tests(foo, bar)']
 
     Returns:
-        (list): A list of tests and their status, with everything after the
-        rightmost `(` filtered out. E.g:
-            [('list, 'pass'),
-             ('of', 'fail'),
-             ('tests', 'pass')]
+        (list): A list of tests, with everything after the rightmost `(`
+        filtered out. E.g: ['list, 'of', 'tests']
     """
-    return [(name[0][:name[0].rfind('(')], name[1])
-            if '(' in name[0]
-            else name for name in mlist]
+    return [name[:name.rfind('(')] if '(' in name else name for name in mlist]
 
 
 def flips(prev_build, next_build):
@@ -129,10 +121,43 @@ def flips(prev_build, next_build):
 
     Args:
         prev_build (dict): The previous Build, e.g:
-            prev_build = {'tests': [('test1', 'pass'), ('test2', 'fail'),
-                                    ('testX', 'pass')]
+            prev_build = {'prodname1': {'bid1': {'tests': {'pass': ['test1',
+                                                                    'test2'],
+                                                          'fail':  ['test3']
+                                                          }
+                                               }
+                                      },
+                         'prodname2': {'bid1': {'tests': {'pass': ['test5'],
+                                                          'fail': ['test4']
+                                                          }
+                                               }
+                                      },
+                         'prodname3': {'bid5': {'tests': {'pass': ['test45'],
+                                                          'fail': ['test22',
+                                                                   'test5']
+                                                          }
+                                               }
+                                      }
+                        }
         next_build (dict): The current Build, e.g:
-            next_build = {'tests': [('test1', 'fail'), ('testY', 'pass')]
+            next_build = {'prodname1': {'bid1': {'tests': {'pass': ['test1'],
+                                                           'fail': ['test3',
+                                                                    'test2']
+                                                          }
+                                               }
+                                      },
+                         'prodname2': {'bid1': {'tests': {'pass': ['test5'],
+                                                          'fail': ['test4']
+                                                          }
+                                               }
+                                      },
+                         'prodname3': {'bid5': {'tests': {'pass': ['test45'],
+                                                          'fail': ['test22',
+                                                                   'test5']
+                                                          }
+                                               }
+                                      }
+                        }
 
     Returns:
         (list) A list of module names that were changed between prev_build and
@@ -140,18 +165,20 @@ def flips(prev_build, next_build):
 
             ['test1', 'testY']
     """
-    tests_prev = rm_params_from_names(prev_build['tests'])
-    tests_next = rm_params_from_names(next_build['tests'])
-    validate_build_contents(tests_prev, tests_next)
-    tests_prev_set = set(hashable(tests_prev))
-    tests_next_set = set(hashable(tests_next))
-    diff = tests_next_set - tests_prev_set
-    name_intersect = (set(util.get_names(tests_prev_set)) &
-                      set(util.get_names(tests_next_set)))
-    return [test[0] for test in diff if test[0] in name_intersect]
+    tests_prev_passed = set(rm_params_from_names(prev_build['tests']['pass']))
+    tests_prev_failed = set(rm_params_from_names(prev_build['tests']['fail']))
+    tests_next_passed = set(rm_params_from_names(next_build['tests']['pass']))
+    tests_next_failed = set(rm_params_from_names(next_build['tests']['fail']))
+
+    diff = ((tests_next_passed - tests_prev_passed) |
+            (tests_next_failed - tests_prev_failed))
+
+    name_intersect = ((tests_prev_passed | tests_prev_failed) &
+                      (tests_next_passed | tests_next_failed))
+
+    return [test for test in diff if test in name_intersect]
 
 
-#@timeit
 def diff_builds(buildset, pkgnames=None, testnames=None):
     """Iterate through BuildSet and find which packages were changed in
     subsequent builds, and which tests flipped. It is very important that
@@ -226,7 +253,6 @@ def diff_builds(buildset, pkgnames=None, testnames=None):
     return ret
 
 
-#@timeit
 def correlate(diff_list):
     """Go through the list of changed modules and flipped tests and count the
     correlations.
@@ -291,7 +317,6 @@ def parse_json(json_string):
 # Main method stuff
 # #################
 
-#@timeit
 def filter_correlations(diff, cutoff=-1):
     """Filter (remove) unwanted entries from database"""
     retdb = copy.deepcopy(diff)
@@ -307,7 +332,7 @@ def filter_correlations(diff, cutoff=-1):
     logging.debug("filtered dict: %s", retdb)
     return retdb
 
-#@timeit
+
 def printable_analysis(correlation, cutoff=-1):
     """Returns a print-friendly list based on the input database"""
     # Filter out correlations below cutoff limit:
