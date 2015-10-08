@@ -173,8 +173,8 @@ def flips(prev_build, next_build):
     diff = ((tests_next_passed - tests_prev_passed) |
             (tests_next_failed - tests_prev_failed))
 
-    name_intersect = (set((list(tests_prev_passed) + list(tests_prev_failed))) &
-                     set((list(tests_next_passed) + list(tests_next_failed))))
+    name_intersect = (tests_prev_passed | tests_prev_failed) & \
+                     (tests_next_passed | tests_next_failed)
 
     return [test for test in diff if test in name_intersect]
 

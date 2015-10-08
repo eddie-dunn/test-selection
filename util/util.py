@@ -194,58 +194,6 @@ class BaseBuild(object):
         return cls(name, modules, tests)
 
 
-class BuildOpt(BaseBuild):
-    """A build object contains the packages that were changed in a build as
-    well as the tests which failed (or perhaps flipped, to be decided)"""
-
-    def __init__(self, name, packages=None, tests=None):
-        """Create a new build.
-
-        Args:
-            name (str): Name of build
-            packages (iterable): An iterable of tuples or lists of the format
-            ('pkgname', 'revnum')
-            tests (iterable): An iterable containing tuples or lists of the
-            format ('testname', 'teststatus')
-
-        """
-        if not packages:
-            packages = []
-        if not tests:
-            tests = {'pass': [], 'fail': []}
-
-        # Assert that the correct objects are passed to the constructor
-        # TODO: Fix validation after optimization is done...
-        # validate_build_contents(packages, tests)
-        super(Build, self).__init__(name, packages, tests)
-
-    def has_test(self, test):
-        """Returns true if `test` exists set"""
-        return test in [_test for _test in (self.tests['pass'] &
-                                            self.tests['fail']) if _test]
-
-    def has_package(self, package):
-        """Returns true if `package` exists in set"""
-        return package in [pkg[0] for pkg in self.packages if pkg]
-
-    @classmethod
-    def _diff_list(cls, first, second):
-        """Diff between first and second (list or set of tuples)"""
-        diff = set(hashable(first)) - set(hashable(second))
-        return {mod[0] for mod in diff if mod}
-        # eTODO: Should seriously consider returning a list instead of a set
-        # since this guarantees the order of stuff when saving as json
-        # return sorted([mod[0] for mod in diff if mod])
-
-    def __sub__(self, other):
-        """Use function _diff_list to calculate the difference between packages
-        and tests"""
-        mod_diff = self._diff_list(self.packages, other.packages)
-        test_diff = self._diff_list(self.tests, other.tests)
-        diff = {self.module_string: mod_diff, self.test_string: test_diff}
-        return diff
-
-
 class Build(BaseBuild):
     """A build object contains the packages that were changed in a build as
     well as the tests which failed (or perhaps flipped, to be decided)"""
