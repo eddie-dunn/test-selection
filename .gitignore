@@ -14,3 +14,4 @@ testvenv/
 *.egg-info
 build/
 dist/
+wheelhouse/
