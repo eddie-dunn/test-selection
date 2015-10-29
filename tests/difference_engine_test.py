@@ -14,9 +14,40 @@ from collections import OrderedDict
 # pylint:disable=no-self-use
 
 
+def make_build(pkgset=None, testset=None):
+    """Make a build from a pkgset and a testset.
+
+    pkgset (list|tuple): follows the format
+        [["mod1, "1"], ["mod2", "1"]]
+
+    testset (dict): follows the format
+        { "pass": [ "test2" ], "fail": [ "test1" ] }
+
+    """
+    build = {'tests': testset or {},
+             'modules': pkgset or {}
+            }
+    return build
+
+def make_testset(passed=None, failed=None):
+    """Takes passed and failed arguments and constructs a testset for a Build.
+
+    passed (list|str): Either a list of strings or a whitespace separated
+        string of names
+    failed (list|str): Either a list of strings or a whitespace separated
+        string of names
+    """
+    if isinstance(passed, str):
+        passed = passed.split()
+    if isinstance(failed, str):
+        failed = failed.split()
+    return {'pass': passed or [], 'fail': failed or []}
+
+
 class Integration(unittest.TestCase):
     """Integration tests"""
     def test_from_json_to_correlation(self):
+        # TODO: Implement this
         pass
 
 class Functional(unittest.TestCase):
@@ -66,15 +97,17 @@ class Functional(unittest.TestCase):
         changed? This means a different correlation altogether...
         """
         builds = [
-            Build('bid1', [('pakX', 1), ('pak2', 1)],
-                  [('test1', 'fail'), ('testX', 'pass')]),
-            Build('bid2', [('pakX', 2), ('pak2', 2)],
-                  [('test1', 'pass'), ('testX', 'fail')]),
-            Build('bid3', [('pakX', 2), ('pak2', 1)],
-                  [('test1', 'fail'), ('testX', 'pass')]),
-            Build('bid4', [('pakX', 3), ('pak2', 3)],
-                  [('test1', 'pass')])]
-        superset = {'prod': BuildSet(builds).dict}
+            make_build([('pakX', 1), ('pak2', 1)],
+                       make_testset(passed='testX', failed='test1')),
+            make_build([('pakX', 2), ('pak2', 2)],
+                       make_testset(passed='test1', failed='testX')),
+            make_build([('pakX', 2), ('pak2', 1)],
+                       make_testset(passed='testX', failed='test1')),
+            make_build([('pakX', 3), ('pak2', 3)],
+                       make_testset(passed='test1', failed=None)),
+
+        ]
+        superset = {'prod': OrderedDict(enumerate(builds))}
         diff = difference_engine.diff_builds(superset)
         correlation = difference_engine.correlate(diff)
         correct_correlation = {'pak2': {'test1': 3, 'testX': 2},
@@ -95,147 +128,18 @@ def test_print_analysis():
     assert highest_weight_A == 4
 
 
-def test_filter_test_params():
-    mlist = [('list', 'pass'),
-             ('of', 'fail'),
-             ('stuff', 'pass'),
-             ('with(1, foo, bar, baz)', 'pass'),
-             ('some', 'pass'),
-             ('params(foo, bar', 'fail')]
-    correct_list = [('list', 'pass'),
-                    ('of', 'fail'),
-                    ('stuff', 'pass'),
-                    ('with', 'pass'),
-                    ('some', 'pass'),
-                    ('params', 'fail')]
-
-    filtered = difference_engine.rm_params_from_names(mlist)
-    assert filtered == correct_list
-
-
-class ParseJSON(unittest.TestCase):
-
-    def setUp(self):
-        self.text_big = """
-{"product1": {
-    "56577": {
-        "modules": [
-            [
-                "packages/web/apps/cgiprg/logger",
-                "292a05517750d75db1beb59b6c8d292d6c202902"
-            ],
-            [
-                "libs/freetype2",
-                "fdbe9db5c652921af2153a2e3ef33f0a54d22c4a"
-            ],
-            [
-                "packages/initscripts/iptables-filter-input",
-                "124b4561d4ba5a53afafa25e3399ab22f9c732ad"
-            ],
-            [
-                "apps/utils/root_wrapper",
-                "ac4e140afb090fffb8745e6716d19b2f2ac9a04b"
-            ]
-        ],
-        "tests": [
-            ["cgiprg/loggertest", "fail"],
-            ["libs/freetype2.test", "pass"],
-            ["initscripts/iptables-filter-input.test", "pass"],
-            ["utils/root_wrapper.test", "fail"],
-            ["test_will_pass_next_time", "fail"]
-        ]
-    },
-    "56578": {
-        "modules": [
-            [
-                "packages/web/apps/cgiprg/logger",
-                "X"
-            ],
-            [
-                "libs/freetype2",
-                "fdbe9db5c652921af2153a2e3ef33f0a54d22c4a"
-            ],
-            [
-                "packages/initscripts/iptables-filter-input",
-                "X"
-            ],
-            [
-                "apps/utils/root_wrapper",
-                "ac4e140afb090fffb8745e6716d19b2f2ac9a04b"
-            ]
-        ],
-        "tests": [
-            ["cgiprg/loggertest", "pass"],
-            ["libs/freetype2.test", "pass"],
-            ["initscripts/iptables-filter-input.test", "fail"],
-            ["test_will_pass_next_time", "pass"],
-            ["new_failed_test", "fail"]
-        ]
-    }
-}}
-    """
-        self.text_small = """
-{"prod": {
-     "bid1": {
-                "modules": [
-                    ["mod1", "1"],
-                    ["mod2", "1"]
-                ],
-                "tests": [
-                    ["test1", "fail"],
-                    ["test2", "pass"]
-                ]
-             },
-     "bid2": {
-                "modules": [
-                    ["mod1", "1"],
-                    ["mod2", "2"]
-                ],
-                "tests": [
-                    ["test3", "pass"],
-                    ["test2", "fail"]
-                ]
-    }
-}}
-"""
-
-    def test_json_loads(self):
-        loaded = difference_engine.json_loads(self.text_small)
-        assert ['test1', 'fail'] in loaded['prod']['bid1']['tests']
-        assert ['mod2', '2'] in loaded['prod']['bid2']['modules']
-
-    def test_parse_json_text_small_correct(self):
-        parsed = difference_engine.parse_json(self.text_small)
-        correct = [{'modules': [],
-                    'tests': []},
-                   {'modules': [u'mod2'],
-                    'tests': ['test2']}
-                  ]
-        assert parsed == correct
-
-    #@pytest.mark.xfail
-    def test_parse_json_text_big_flips(self):
-        parsed = difference_engine.parse_json(self.text_big)
-        assert "test_will_pass_next_time" in parsed[1]['tests']
-        assert 'libs/freetype2.test' not in parsed[1]['tests']
-
-    #@pytest.mark.xfail
-    def test_parse_json_text_big_changed_modules(self):
-        parsed = difference_engine.parse_json(self.text_big)
-        assert "packages/web/apps/cgiprg/logger" in parsed[1]['modules']
-        assert "apps/utils/root_wrapper" not in parsed[1]['modules']
-
-
 class TestDiffBuilds(unittest.TestCase):
     def setUp(self):
         self.builds = {
             "0": {
-                "tests": [
-                    ("pak1.test", "pass"),
-                    ("mod5.test", "fail"),
-                    ("pak0.test", "fail"),
-                    ("pak4.test", "pass")
-                ],
+                "tests": {
+                    # ("pak1.test", "pass"),
+                    # ("mod5.test", "fail"),
+                    # ("pak0.test", "fail"),
+                    # ("pak4.test", "pass")
+                    'pass': ['pak1.test', 'pak4.test'],
+                    'fail': ['mod5.test', 'pak0.test'],
+                },
                 "modules": [
                     [
                         "pak1",
@@ -252,12 +156,14 @@ class TestDiffBuilds(unittest.TestCase):
                 ]
             },
             "1": {
-                "tests": [
-                    ("pak1.test", "pass"),
-                    ("mod5.test", "pass"),
-                    ("pak4.test", "fail"),
-                    ("pak7.test", "fail")
-                ],
+                "tests": {
+                    # ("pak1.test", "pass"),
+                    # ("mod5.test", "pass"),
+                    # ("pak4.test", "fail"),
+                    # ("pak7.test", "fail")
+                    'pass': ['pak1.test', 'mod5.test'],
+                    'fail': ['pak4.test', 'pak7.test'],
+                },
                 "modules": [
                     [
                         "pak1",
@@ -322,21 +228,30 @@ class TestDiffBuilds(unittest.TestCase):
 #   |_|    |_|_| .__/|___/
 #              |_|
 def test_flips_are_correct1():
-    build1 = {'tests': [('testA', 'pass'), ('testB', 'fail')]}
-    build2 = {'tests': [('testA', 'fail'), ('testC', 'fail')]}
+    testset1 = {'pass': ['testA'], 'fail': ['testB']}
+    # testset2 = {'pass': ['testB'], 'fail': ['testA']}
+    testset2 = make_testset(passed='testB', failed='testA testC')
+    build1 = make_build(testset=testset1)
+    build2 = make_build(testset=testset2)
+    flips = difference_engine.flips(build1, build2)
+    assert set(flips) == set(['testA', 'testB'])
+
+
+def test_flips_are_correct2():
+    testset1 = {'pass': ['testA'], 'fail': ['testB']}
+    testset2 = {'pass': [], 'fail': ['testA', 'testB']}
+    build1 = make_build(testset=testset1)
+    build2 = make_build(testset=testset2)
     flips = difference_engine.flips(build1, build2)
     assert set(flips) == set(['testA'])
 
-def test_flips_are_correct2():
-    build1 = {'tests': [('testA', 'pass'), ('testB', 'fail')]}
-    build2 = {'tests': [('testA', 'fail'), ('testB', 'fail')]}
-    flips = difference_engine.flips(build1, build2)
-    assert set(flips) == set(['testA'])
 
 def test_flips_are_correct3():
     # pylint: disable=line-too-long
-    build1 = {'tests': [('testA', 'pass'), ('testB', 'fail'), ('testC', 'fail')]}
-    build2 = {'tests': [('testA', 'fail'), ('testB', 'fail'), ('testC', 'pass')]}
+    testset1 = {'pass': ['testA'], 'fail': ['testB', 'testC']}
+    testset2 = {'pass': ['testC'], 'fail': ['testB', 'testA']}
+    build1 = make_build(testset=testset1)
+    build2 = make_build(testset=testset2)
     flips = difference_engine.flips(build1, build2)
     assert set(flips) == set(['testA', 'testC'])
 
