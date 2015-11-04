@@ -4,6 +4,8 @@
 from avg_timesaving import get_test_sizes
 from collections import OrderedDict as od
 
+@skip
+
 def test_get_test_sizes():
     data = od()
     data['mod1'] = {'test1': 1, "test2": 33}

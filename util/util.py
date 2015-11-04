@@ -91,7 +91,8 @@ def is_tuple_or_list(item):
 def validate_list_or_set(iterable):
     """Validate iterable to be either a list or set of tuples"""
     if not is_list_or_set(iterable):
-        raise TypeError("Iterable not valid list or set")
+        raise TypeError("Iterable not valid list or set, was "
+                        "{}".format(type(iterable)))
 
     if iterable == []:  # If iterable is empty list it is also valid
         return
@@ -215,7 +216,7 @@ class Build(BaseBuild):
 
         # Assert that the correct objects are passed to the constructor
         # TODO: Fix validation after optimization is done...
-        # validate_build_contents(packages, tests)
+        validate_build_contents(packages, tests)
         super(Build, self).__init__(name, packages, tests)
 
     def has_test(self, test):
