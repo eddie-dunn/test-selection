@@ -45,7 +45,8 @@ def parse_args():
                         'Ignored if wide mode is specified.')
     parser.add_argument('-f', '--correlation-data',
                         default=DEFAULT_CORRELATION_DATA_FILE,
-                        help='json file to analyze')
+                        help='json file to analyze, defaults to "{}"'.format(
+                            DEFAULT_CORRELATION_DATA_FILE))
     parser.add_argument('-c', '--cutoff', help='cutoff limit for correlation '
                         'weights', default=0, type=int)
     parser.add_argument('--history', type=int, default=6,
