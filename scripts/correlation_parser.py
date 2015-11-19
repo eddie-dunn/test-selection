@@ -6,7 +6,7 @@ Query correlation file with a package name and get recommended tests to run.
 Written for Python3 but should support Python2 as well.
 """
 
-from __future__ import print_function
+from collections import defaultdict
 import argparse
 import json
 import sys
@@ -57,13 +57,35 @@ def parse_args():
                                                          'strategy.')
     parser.add_argument('-v', '--verbose', action="store_true", help='prints '
                         'additional information')
+    parser.add_argument(
+        '--sort', default='weight',
+        help="Option to sort output in different ways",
+        choices=['weight', 'weight-reverse', 'alphabet', 'alphabet-reverse'],
+        dest='order',
+    )
     return parser.parse_args()
+
+
+def sort_tests(tests: dict, order: str) -> list:
+    """Takes a dict containing str/int key/value pairs like:
+        {'testsname': correlation_weight}
+
+    Returns a list ordered as specified by parameter `order`.
+    """
+    if order == 'weight':
+        return sorted(tests.items(), key=operator.itemgetter(1, 0))
+    elif order == 'weight-reverse':
+        return sorted(tests.items(), key=operator.itemgetter(1, 0))[::-1]
+    elif order == 'alphabet':
+        return sorted(tests.items())
+    elif order == 'alphabet-reverse':
+        return sorted(tests.items())[::-1]
+
+    raise ValueError("Order '%s' is not supported" % order)
 
 
 def narrow(filename, args):
     """Perform narrow test selection."""
-    # pylint: disable=too-many-branches
-    # todo: fix this  ^^^^^^^^^^^^^^^^^
     modules = args.modules
 
     if args.verbose:
@@ -89,7 +111,7 @@ def narrow(filename, args):
               "{}".format(modules))
         sys.exit(1)
 
-    ordered_tests = sorted(tests.items(), key=operator.itemgetter(1, 0))
+    ordered_tests = sort_tests(tests, args.order)
 
     if args.verbose:
         print("Recommended tests:")
@@ -124,7 +146,7 @@ def wide(filename, args):
     data = json.loads(string_data)
 
     tests = sum_tests(data)
-    sorted_tests = sorted(tests.items(), key=operator.itemgetter(1, 0))
+    sorted_tests = sort_tests(tests, args.order)
 
     if args.verbose:
         for item in sorted_tests:
@@ -149,25 +171,12 @@ def sum_tests(data):
     """Go through each package in data, get the tests and their correlations,
     and add test and correlation to a list. If test already exists, increment
     weight by the weight of the test found."""
-    tests = {}
+    tests = defaultdict(int)
     for package in data:
         for test in data[package]:
-            if test in tests:
-                tests[test] += data[package][test]
-            else:
-                tests[test] = data[package][test]
+            tests[test] += data[package][test]
 
     return tests
-
-
-def test_sum_tests():
-    """Test sumt test func"""
-    data = {'pak1': {'test1': 2, 'test2': 5},
-            'pak2': {'test1': 1, 'test3': 7},
-            'pak3': {'test1': 1, 'test3': 1}}
-
-    tests = sum_tests(data)
-    assert tests == {'test1': 4, 'test2': 5, 'test3': 8}
 
 
 def main():
