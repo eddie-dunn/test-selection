@@ -86,6 +86,7 @@ def sort_tests(tests: dict, order: str) -> list:
 
 def narrow(filename, args):
     """Perform narrow test selection."""
+    # TODO: Refactor this
     modules = args.modules
 
     if args.verbose:
@@ -136,6 +137,7 @@ def narrow(filename, args):
 
 def wide(filename, args):
     """Perform wide test selection."""
+    # TODO: Refactor this
     if args.verbose:
         print("\nParsing using wide selection on file '{}'"
               "\n".format(filename))

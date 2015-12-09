@@ -7,6 +7,19 @@ import pytest
 
 from scripts.correlation_parser import sort_tests
 from scripts.correlation_parser import sum_tests
+from scripts.correlation_parser import narrow
+
+# Test narrow()
+# ============
+
+def test_narrow1():
+    from collections import namedtuple
+    Args = namedtuple("Args", ['verbose', 'modules', 'order', 'cutoff'])
+    args = Args(verbose=False, modules='apps/monolith', order=None, cutoff=0)
+    filename = '/tmp/test_foo.json'
+    with pytest.raises(SystemExit):
+        narrow(filename, args)
+        # TODO: Add more tests than testing bailout if file can't be found
 
 
 # Test sort_tests
