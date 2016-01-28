@@ -12,8 +12,9 @@ import json
 import sys
 import operator
 
+
 MAX_NBR_OF_TESTS = 1203
-DEFAULT_CORRELATION_DATA_FILE = '/var/cache/correlation_data.json'
+MODE_CHOICES = ['WIDE', 'wide', 'NARROW', 'narrow']
 
 
 def read_data(filename):
@@ -38,25 +39,19 @@ def get_tests(module, data):
 
 
 def parse_args():
-    """setup argparser"""
+    """Setup argparser"""
     parser = argparse.ArgumentParser()
     parser.add_argument('modules', nargs='+', help='module(s) to get '
                         'recommendations on. Space separated list of modules. '
                         'Ignored if wide mode is specified.')
-    parser.add_argument('-f', '--correlation-data',
-                        default=DEFAULT_CORRELATION_DATA_FILE,
-                        help='json file to analyze, defaults to "{}"'.format(
-                            DEFAULT_CORRELATION_DATA_FILE))
+    parser.add_argument('-f', '--correlation-data', required=True,
+                        help='json file to analyze')
     parser.add_argument('-c', '--cutoff', help='cutoff limit for correlation '
                         'weights', default=0, type=int)
-    parser.add_argument('--history', type=int, default=6,
-                        choices=[3, 6, 12, 24], help='time frame '
-                        'from which to analyze.')
     parser.add_argument('--mode', default='NARROW',
-                        choices=['WIDE', 'NARROW'], help='regression test '
-                                                         'strategy.')
-    parser.add_argument('-v', '--verbose', action="store_true", help='prints '
-                        'additional information')
+                        choices=MODE_CHOICES, help='regression test strategy.')
+    parser.add_argument('-v', '--verbose', action="store_true",
+                        help='prints additional information')
     parser.add_argument(
         '--sort', default='weight',
         help="Option to sort output in different ways",
@@ -187,10 +182,10 @@ def main():
     args = parse_args()
     filename = args.correlation_data
 
-    if args.mode == 'NARROW':
+    if args.mode.lower() == 'narrow':
         narrow(filename, args)
 
-    if args.mode == 'WIDE':
+    if args.mode.lower() == 'wide':
         wide(filename, args)
 
 
