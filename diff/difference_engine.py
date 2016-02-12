@@ -109,7 +109,7 @@ def rm_params_from_names(mlist):
         (list): A list of tests, with everything after the rightmost `(`
         filtered out. E.g: ['list, 'of', 'tests']
     """
-    return [name[:name.rfind('(')] if '(' in name else name for name in mlist]
+    return [name[:name.find('(')] if '(' in name else name for name in mlist]
 
 
 def flips(prev_build, next_build):

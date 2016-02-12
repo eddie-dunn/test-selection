@@ -346,6 +346,11 @@ def test_filter_test_params():
     filtered = difference_engine.rm_params_from_names(mlist)
     assert filtered == correct_list
 
+def test_filter_test_params2():
+    mlist = ['pkg.module.testname(param1, param2, <weird()<>ass<str//',]
+    correct_list = ['pkg.module.testname',]
+    filtered = difference_engine.rm_params_from_names(mlist)
+    assert filtered == correct_list
 
 class ParseJSON(unittest.TestCase):
     """
