@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Tests for sim2.py"""
-import diff.simulatron.sim2 as sim2
-from util.util import json_loads
-
 import unittest
 from collections import Counter
+
+import diff.simulatron.sim2 as sim2
+from util.util import json_loads
 
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
@@ -38,7 +38,7 @@ def test_generate_buildset_0():
                                "modules": [("pak1", "Xrev1"),
                                            ("pak2", "rev0"),
                                            ("pak3", "rev0")]
-                               }
+                              }
                         }
     assert buildset.dict['0'] == correct_set_first["0"]
     # NOTE: This only checks that the first build in buildset is correct. A
@@ -95,7 +95,7 @@ class IntegrationTests(unittest.TestCase):
                                                               ('pak7', 'rev0'),
                                                               ('pak8', 'rev0'),
                                                               ('pak9', 'rev0')]
-                                                         )
+                                                            )
 
         assert superset['prod0']['1']['modules'] == [('pak0', 'rev0'),
                                                      ('pak1', 'Xrev2'),
@@ -201,7 +201,7 @@ def test_newrev_4():
 
 
 # Test random_build function
-# ========================== 
+# ==========================
 class TestRandomBuild(object):
     def test_one_random_build1(self):
         """Test one random build"""
@@ -218,7 +218,7 @@ class TestRandomBuild(object):
         modules = [('pak{}'.format(num), 'rev1') for num in range(5)]
         tests = [('{}.test'.format(pak[0]), 'pass') for pak in modules]
 
-        changed_paks, flipped_tests = sim2.random_build(
+        changed_paks, _ = sim2.random_build(
             modules, tests, pkg_noise=100, test_noise=0, seed=2)
         assert set(changed_paks) == set([('pak0', 'rev2'),
                                          ('pak1', 'rev1'),
@@ -296,37 +296,43 @@ class TestRandomBuild(object):
         modules = [('pak{}'.format(num), 'rev1') for num in range(5)]
         tests = [('{}.test'.format(pak[0]), 'pass') for pak in modules]
 
-        changed_paks, flipped_tests = sim2.random_build(
+        changed_paks, _ = sim2.random_build(
             modules, tests, 2, 2, seed=2)
 
-        assert set(changed_paks) == set([
-            ('pak0', 'rev1'),
-            ('pak1', 'rev1'),
-            ('pak2', 'rev1'),
-            ('pak3', 'rev1'),
-            ('pak4', 'Xrev2')]
+        assert set(changed_paks) == set(
+            [
+                ('pak0', 'rev1'),
+                ('pak1', 'rev1'),
+                ('pak2', 'rev1'),
+                ('pak3', 'rev1'),
+                ('pak4', 'Xrev2')
+            ]
         )
 
-        changed_paks2, flipped_tests2 = sim2.random_build(
+        changed_paks2, _ = sim2.random_build(
             modules, tests, 2, 2, seed=2)
 
-        assert set(changed_paks) == set([
-            ('pak0', 'rev1'),
-            ('pak1', 'rev1'),
-            ('pak2', 'rev1'),
-            ('pak3', 'rev1'),
-            ('pak4', 'Xrev2')]
+        assert set(changed_paks2) == set(
+            [
+                ('pak0', 'rev1'),
+                ('pak1', 'rev1'),
+                ('pak2', 'rev1'),
+                ('pak3', 'rev1'),
+                ('pak4', 'Xrev2')
+            ]
         )
 
-        changed_paks3, flipped_tests3 = sim2.random_build(
+        changed_paks3, _ = sim2.random_build(
             modules, tests, 0, 0, seed=3)
 
-        assert set(changed_paks3) == set([
-            ('pak1', 'Xrev2'),
-            ('pak3', 'rev1'),
-            ('pak2', 'rev1'),
-            ('pak0', 'rev1'),
-            ('pak4', 'rev1')]
+        assert set(changed_paks3) == set(
+            [
+                ('pak1', 'Xrev2'),
+                ('pak3', 'rev1'),
+                ('pak2', 'rev1'),
+                ('pak0', 'rev1'),
+                ('pak4', 'rev1')
+            ]
         )
 
 

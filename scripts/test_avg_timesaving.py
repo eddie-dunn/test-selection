@@ -1,10 +1,9 @@
 """tests for avg_timesaving.py"""
 # pylint: disable=missing-docstring
 
-from avg_timesaving import get_test_sizes
 from collections import OrderedDict as od
+from scripts.avg_timesaving import get_test_sizes
 
-@skip
 
 def test_get_test_sizes():
     data = od()
