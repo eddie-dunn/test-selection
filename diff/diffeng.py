@@ -6,10 +6,10 @@ import argparse
 import codecs
 import logging
 
-# from diff.difference_engine import correlate
-# from diff.difference_engine import parse_json
-# from diff.difference_engine import printable_analysis
-# from util.util import json_dumps
+from diff.difference_engine import correlate
+from diff.difference_engine import parse_json
+from diff.difference_engine import printable_analysis
+from util.util import json_dumps
 
 NAME = __name__ if __name__ != '__main__' else "diffeng"
 DEBUG_CHOICES = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
