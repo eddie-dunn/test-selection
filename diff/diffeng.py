@@ -1,23 +1,27 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """Main module for running the Difference Engine"""
-from util.util import json_dumps
-from diff.difference_engine import parse_json
-from diff.difference_engine import correlate
-from diff.difference_engine import printable_analysis
-
 # External imports
 import argparse
-import logging
 import codecs
+import logging
+
+# from diff.difference_engine import correlate
+# from diff.difference_engine import parse_json
+# from diff.difference_engine import printable_analysis
+# from util.util import json_dumps
+
+NAME = __name__ if __name__ != '__main__' else "diffeng"
+DEBUG_CHOICES = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 
 
 def setup_logging(loglevel, logfile):
+    """Setup logging."""
     numeric_level = getattr(logging, loglevel.upper(), None)
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % loglevel)
 
-    logformat = "[%(asctime)s %(levelname)s] %(message)s"
+    logformat = "[{}][%(asctime)s %(levelname)s] %(message)s".format(NAME)
     dateformat = "%H:%M:%S"
     if logfile:
         logging.basicConfig(filename=logfile, format=logformat,
@@ -34,23 +38,23 @@ def main():
     # default_outputfile = '/tmp/correlation.json'
     # default_diffdump = '/tmp/diffdump.json'
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('filename', help="JSON file to analyze")
     parser.add_argument('output', help='Output file for correlation json data')
-    parser.add_argument('-l', '--loglevel', help="Loglevel, valid values are: "
-                        "DEBUG, INFO, WARNING, ERROR, CRITICAL",
+    parser.add_argument('-l', '--loglevel', help="Set a loglevel",
+                        choices=DEBUG_CHOICES,
                         default='WARNING')
-    parser.add_argument('--logfile', default="",
+    parser.add_argument('--logfile', default=None,
                         help="Log to file instead of stdout.")
     parser.add_argument('-c', '--cutoff',
-                        help="Cutoff level for correlations. Defaults to "
-                        "{}".format(default_cutoff),
+                        help="Cutoff level for correlations.",
                         type=int, default=default_cutoff)
     parser.add_argument('--print', action='store_true', dest='print_',
                         help='print output to stdout as well')
     parser.add_argument('--minimized', '-m', action='store_true',
                         help='store output as minimized json',)
-    parser.add_argument('--diffdump', '-d',
+    parser.add_argument('--diffdump', '-d', default=None,
                         help='dump the difference data that the correlations '
                         'are calculated from as well.')
     args = parser.parse_args()
