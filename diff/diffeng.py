@@ -21,7 +21,7 @@ def setup_logging(loglevel, logfile):
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % loglevel)
 
-    logformat = "[{}][%(asctime)s %(levelname)s] %(message)s".format(NAME)
+    logformat = "[{}][%(asctime)s %(levelname)+8s] %(message)s".format(NAME)
     dateformat = "%H:%M:%S"
     if logfile:
         logging.basicConfig(filename=logfile, format=logformat,
